@@ -1,3 +1,3 @@
-module go.etcd.io/bbolt
+module github.com/viktordanov/bbolt
 
 go 1.12
