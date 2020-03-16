@@ -2,7 +2,10 @@ package bbolt
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"unsafe"
 )
 
@@ -268,6 +271,15 @@ func (b *Bucket) Get(key []byte) []byte {
 	if !bytes.Equal(key, k) {
 		return nil
 	}
+
+	gz, _ := gzip.NewReader(bytes.NewReader(v))
+
+	v, _ = ioutil.ReadAll(gz)
+
+	if err := gz.Close(); err != nil {
+		log.Fatal(err)
+	}
+
 	return v
 }
 
@@ -299,6 +311,15 @@ func (b *Bucket) Put(key []byte, value []byte) error {
 
 	// Insert into node.
 	key = cloneBytes(key)
+	var bb bytes.Buffer
+	gz := gzip.NewWriter(&bb)
+	if _, err := gz.Write(value); err != nil {
+		log.Fatal(err)
+	}
+	if err := gz.Close(); err != nil {
+		log.Fatal(err)
+	}
+	value = bb.Bytes()
 	c.node().put(key, key, value, 0, 0)
 
 	return nil
